@@ -3,20 +3,27 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Maritime Email Extraction API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: extraction
+    description: Email extraction operations
+  - name: history
+    description: Extraction history
+  - name: stats
+    description: Cost and performance statistics
+  - name: knowledge
+    description: Maritime knowledge base
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +31,150 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /emails/extract:
+    post:
+      operationId: extractEmail
+      tags: [extraction]
+      summary: Extract structured data from a maritime email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExtractionInput"
+      responses:
+        "200":
+          description: Extraction result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExtractionJob"
+        "400":
+          description: Bad request
+
+  /emails:
+    get:
+      operationId: listExtractions
+      tags: [history]
+      summary: List past extraction jobs
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: emailType
+          in: query
+          schema:
+            type: string
+            enum: [VC, TC, Tonnage, Mixed, Unknown]
+      responses:
+        "200":
+          description: List of extraction jobs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExtractionListResponse"
+
+  /emails/{id}:
+    get:
+      operationId: getExtraction
+      tags: [history]
+      summary: Get a single extraction job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Extraction job details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExtractionJob"
+        "404":
+          description: Not found
+
+    delete:
+      operationId: deleteExtraction
+      tags: [history]
+      summary: Delete an extraction job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /stats:
+    get:
+      operationId: getStats
+      tags: [stats]
+      summary: Get cost savings and extraction statistics
+      responses:
+        "200":
+          description: Platform statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlatformStats"
+
+  /knowledge/regions:
+    get:
+      operationId: listRegions
+      tags: [knowledge]
+      summary: List maritime region abbreviations
+      responses:
+        "200":
+          description: Regions list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/KnowledgeEntry"
+
+  /knowledge/ports:
+    get:
+      operationId: listPorts
+      tags: [knowledge]
+      summary: List known maritime ports
+      responses:
+        "200":
+          description: Ports list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/KnowledgeEntry"
+
+  /knowledge/vessel-sizes:
+    get:
+      operationId: listVesselSizes
+      tags: [knowledge]
+      summary: List vessel size classifications
+      responses:
+        "200":
+          description: Vessel sizes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VesselSizeEntry"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +185,225 @@ components:
       required:
         - status
 
+    ExtractionInput:
+      type: object
+      required:
+        - emailText
+      properties:
+        emailText:
+          type: string
+          minLength: 10
+        subject:
+          type: ["string", "null"]
+
+    ExtractionJob:
+      type: object
+      required:
+        - id
+        - emailText
+        - emailType
+        - pipeline
+        - extractedEntries
+        - processingMs
+        - llmUsed
+        - estimatedCostUsd
+        - createdAt
+      properties:
+        id:
+          type: integer
+        emailText:
+          type: string
+        subject:
+          type: ["string", "null"]
+        emailType:
+          type: string
+          enum: [VC, TC, Tonnage, Mixed, Unknown]
+        pipeline:
+          type: string
+          enum: [rule-based, template, llm-fallback]
+          description: Which pipeline layer handled this email
+        confidence:
+          type: number
+          description: Confidence score 0-1
+        extractedEntries:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExtractedEntry"
+        processingMs:
+          type: integer
+        llmUsed:
+          type: boolean
+        estimatedCostUsd:
+          type: number
+        createdAt:
+          type: string
+
+    ExtractedEntry:
+      type: object
+      required:
+        - entryType
+        - fields
+        - confidence
+        - extractionMethod
+      properties:
+        entryType:
+          type: string
+          enum: [VC, TC, Tonnage]
+        confidence:
+          type: number
+        extractionMethod:
+          type: string
+          enum: [rule-based, template, llm-fallback]
+        fields:
+          $ref: "#/components/schemas/ExtractedFields"
+
+    ExtractedFields:
+      type: object
+      properties:
+        email_type:
+          type: ["string", "null"]
+        cargo_name:
+          type: ["string", "null"]
+        account_name:
+          type: ["string", "null"]
+        cargo_type:
+          type: ["string", "null"]
+        tonnage_name:
+          type: ["string", "null"]
+        tonnage_type:
+          type: ["string", "null"]
+        min_size:
+          type: ["number", "null"]
+        max_size:
+          type: ["number", "null"]
+        region:
+          type: ["string", "null"]
+        matching_region:
+          type: ["string", "null"]
+        load_port:
+          type: ["string", "null"]
+        discharge_port:
+          type: ["string", "null"]
+        del_port:
+          type: ["string", "null"]
+        redel_port:
+          type: ["string", "null"]
+        port:
+          type: ["string", "null"]
+        open_date:
+          type: ["string", "null"]
+        close_date:
+          type: ["string", "null"]
+        laycan_start_date:
+          type: ["string", "null"]
+        laycan_end_date:
+          type: ["string", "null"]
+        duration:
+          type: ["string", "null"]
+        dwt:
+          type: ["string", "null"]
+        pic:
+          type: ["string", "null"]
+        email_id:
+          type: ["string", "null"]
+        phone_number:
+          type: ["string", "null"]
+        restriction:
+          type: ["string", "null"]
+        reason:
+          type: ["string", "null"]
+        latitude:
+          type: ["number", "null"]
+        longitude:
+          type: ["number", "null"]
+
+    ExtractionListResponse:
+      type: object
+      required:
+        - items
+        - total
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExtractionJob"
+        total:
+          type: integer
+
+    PlatformStats:
+      type: object
+      required:
+        - totalEmails
+        - ruleBasedCount
+        - templateCount
+        - llmFallbackCount
+        - estimatedLlmSavingsUsd
+        - avgProcessingMs
+        - avgConfidence
+        - costReductionPct
+        - recentActivity
+      properties:
+        totalEmails:
+          type: integer
+        ruleBasedCount:
+          type: integer
+        templateCount:
+          type: integer
+        llmFallbackCount:
+          type: integer
+        estimatedLlmSavingsUsd:
+          type: number
+        avgProcessingMs:
+          type: number
+        avgConfidence:
+          type: number
+        costReductionPct:
+          type: number
+        recentActivity:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityPoint"
+
+    ActivityPoint:
+      type: object
+      required:
+        - date
+        - count
+        - llmUsed
+      properties:
+        date:
+          type: string
+        count:
+          type: integer
+        llmUsed:
+          type: integer
+
+    KnowledgeEntry:
+      type: object
+      required:
+        - code
+        - fullName
+        - category
+      properties:
+        code:
+          type: string
+        fullName:
+          type: string
+        category:
+          type: string
+
+    VesselSizeEntry:
+      type: object
+      required:
+        - name
+        - minDwt
+        - maxDwt
+      properties:
+        name:
+          type: string
+        minDwt:
+          type: integer
+        maxDwt:
+          type: ["integer", "null"]
+        description:
+          type: ["string", "null"]

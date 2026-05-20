@@ -1,0 +1,823 @@
+
+Problem Statement: Maritime Email Extraction & Cost Optimization System
+Project Background
+In the shipbroking and chartering industry, brokers and charterers receive thousands of emails daily containing cargo requirements, vessel availability, voyage charter details, and time charter information.
+These emails are generally unstructured and contain operational details in multiple formats, abbreviations, and free-text maritime terminology.
+Currently, we use Large Language Model (LLM) APIs to extract structured information from these emails. While extraction accuracy is acceptable, the operational cost is extremely high due to:
+Large email volume
+Long email content
+Multiple extraction calls per email
+Continuous daily processing
+Repeated parsing of similar formats
+We want to significantly reduce or eliminate dependency on expensive LLM APIs while maintaining high extraction accuracy.
+The goal is to design and implement a scalable, intelligent, low-cost extraction architecture.
+
+Current Extraction Scope
+The system currently extracts the following structured data.
+Source reference:
+
+1. Cargo VC Extraction (Voyage Charter)
+Fields:
+email_type
+cargo_name
+account_name
+cargo_type
+min_size
+max_size
+region
+matching_region
+load_port
+discharge_port
+laycan_start_date
+laycan_end_date
+email_id
+phone_number
+latitude
+longitude
+restriction
+reason
+
+
+2. Cargo TC Extraction (Time Charter)
+Fields:
+email_type
+cargo_name
+account_name
+cargo_type
+min_size
+max_size
+region
+matching_region
+del_port
+redel_port
+laycan_start_date
+laycan_end_date
+duration
+email_id
+phone_number
+latitude
+longitude
+restriction
+reason
+
+
+3. Tonnage Extraction
+Fields:
+email_type
+tonnage_name
+tonnage_type
+region
+matching_region
+port
+open_date
+close_date
+dwt
+pic
+email_id
+phone_number
+latitude
+longitude
+restriction
+reason
+
+
+Additional Business Rules
+Source reference:
+Rules include:
+Convert all dates to YYYY-MM-DD
+If laycan_end missing → laycan_start + 5 days
+If duration range given → use max value
+If duration unit missing → assume days
+Convert quantities to metric tons
+Extract ALL entries from email
+Extract PIC, email, phone from signature
+Port format standardization:
+Port, Country
+
+
+
+Maritime Classification Standards
+Cargo Type Values
+Dry Bulk
+General Cargo
+Crude Oil
+Chemical
+Gas
+
+Tonnage Type Values
+General cargo
+Bulk Carrier
+Crude oil tanker
+Chemical tanker
+Gas Carrier
+
+Vessel Size Conversion Rules
+Handymax   = 10000 - 49999
+Supramax   = 50000 - 59999
+Ultramax   = 60000 - 69999
+Panamax    = 70000 - 79999
+Kamsarmax  = 80000 - 89999
+Baby Cape  = 90000 - 199999
+Capesize   = 200000+
+
+
+Existing Challenges
+1. Extremely High LLM API Cost
+Current extraction heavily relies on external LLM APIs.
+Problems:
+High token consumption
+Long maritime emails
+Multiple extraction retries
+Thousands of emails daily
+High recurring monthly cost
+
+2. Repetitive Email Patterns
+Most maritime emails follow repetitive formats:
+Fixed broker templates
+Standard abbreviations
+Predictable field locations
+Common voyage terminology
+Repeated vessel descriptions
+Using expensive LLM inference for every email is inefficient.
+
+3. Multi-Entry Parsing Complexity
+One email may contain:
+Multiple cargoes
+Multiple vessels
+Mixed VC and TC requirements
+Signature blocks
+Operational clauses
+System must split and extract all entries correctly.
+
+Objective
+Design a hybrid extraction architecture that:
+Reduces LLM API usage by 70–95%
+Maintains high extraction accuracy
+Supports maritime abbreviations and formats
+Handles bulk email processing
+Is scalable and production-ready
+
+Expected Solution Approach
+The developer is expected to propose and implement a cost-optimized architecture.
+Possible approaches may include:
+
+1. Rule-Based Extraction Layer
+Use:
+Regex
+Pattern matching
+Maritime dictionaries
+NLP tokenization
+Template detection
+Examples:
+LAYCAN:
+DWT:
+LP:
+DP:
+DEL:
+REDEL:
+
+This layer should extract straightforward fields without LLM calls.
+
+2. Template Classification Engine
+Detect recurring broker templates and process them using predefined parsers.
+Example:
+Broker A format
+Broker B format
+SeaSchiffe format
+YB Global Shipping format
+
+Goal:
+Avoid LLM calls for known formats
+Improve speed
+Reduce cost
+
+3. Lightweight ML / Local NLP Models
+Possible options:
+spaCy NER
+DistilBERT
+Small local transformer models
+Fine-tuned maritime extraction model
+Goal:
+Run locally
+Avoid per-token API cost
+Improve entity extraction
+
+4. Hybrid Confidence-Based Pipeline
+Suggested flow:
+Step 1:
+Rule Engine
+
+Step 2:
+Template Parser
+
+Step 3:
+Local ML Model
+
+Step 4:
+Fallback to LLM only if confidence is low
+
+This ensures LLM is used only for difficult emails.
+
+5. Maritime Knowledge Base
+Create dictionaries for:
+Ports
+Regions
+Cargo names
+Vessel types
+Maritime abbreviations
+Country mapping
+Example:
+ECI = East Coast India
+WAFR = West Africa
+UMX = Ultramax
+SMX = Supramax
+
+
+6. Signature Parsing Engine
+Extract:
+PIC
+Email
+Phone Number
+from email signatures separately using regex and heuristics.
+
+7. Email Segmentation Engine
+Split emails into:
+Cargo blocks
+Vessel blocks
+Signature blocks
+Operational notes
+before extraction.
+
+Success Metrics
+Primary Goals
+Reduce LLM API cost by minimum 70%
+Achieve extraction accuracy above 90%
+Process emails in near real-time
+Support batch processing
+
+Technical Expectations
+Developer should provide:
+Architecture Design
+Processing pipeline
+Model selection
+Parsing strategy
+Confidence scoring
+Scalability Plan
+Queue processing
+Parallel extraction
+Caching strategy
+Cost Optimization Strategy
+Local inference
+Rule-first architecture
+Smart LLM fallback logic
+Evaluation Metrics
+Precision
+Recall
+F1 score
+Cost per email
+Processing latency
+
+Sample Input Data
+Large collection of real maritime emails containing:
+Voyage charter cargoes
+Time charter requirements
+Tonnage positions
+Vessel specifications
+Examples available in attached extraction document.
+
+Expected Deliverables
+Developer should provide:
+1. System Architecture
+Detailed extraction flow.
+2. Parsing Engine
+Rule-based + ML implementation.
+3. Training / Mapping Logic
+Maritime dictionaries and normalization.
+4. Cost Analysis
+Current vs proposed architecture.
+5. Benchmark Report
+Accuracy and performance comparison.
+6. Deployment Plan
+Cloud/local deployment recommendations.
+
+Final Goal
+Build an intelligent maritime email extraction platform that minimizes dependency on expensive LLM APIs while maintaining high-quality structured extraction for chartering and shipbroking operations.
+
+Below are the different formats of Tonnages and Cargoes (TC and VC)
+Different emails segregated by dash(---)
+
+TC Cargoes
+
+Dear All,
+
+Good day. 
+
+
+Kindly propose suitable tonnage for the below fully firm requirement:
+
+
+Account: YB Global Shipping LLC FZ
+Vessel Type: SUPRA/ULTRAMAX
+Cargo: Bulk Harmless Cargo
+Tonnage: 58K - 60K  DWT VESSEL (Grabber Fitted)
+Laycan: END JULY, 2025
+Delivery: 1SP WAFR
+Redelivery: 1SP South China
+Duration: ABOUT 45 TO 55 DAYS
+
+
+Adcom: 3.75%
+Account: YB Global Shipping LLC FZ
+Vessel Type: SUPRA/ULTRAMAX
+Cargo: Bulk Harmless Cargo
+Tonnage: 60K - 65K  DWT VESSEL (Grabber Fitted)
+Laycan: 18th - 20th JULY, 2025
+Delivery: 1SP ECI
+Redelivery: 1SP S.E Asia
+Duration: ABOUT 15 TO 20 DAYS
+Adcom: 3.75%
+
+
+
+
+
+
+Ayush Sharma
+Chartering,
+Mobile/WhatsApp: +91 9523757703 // Teams: ayushsharma9491@outlook.com
+
+Anish Ansalan,
+Chartering Head,
+Email: anish@ybglobalshipping.com
+Mobile/WhatsApp: +91 9600248134 // Teams: ansalananish@hotmail.com
+
+YB Global Shipping LLC-FZ
+(Members of BIMCO: 183222)
+The Meydan Hotel, Granstad, 6th floor, Meydan Road, Nad Al Sheba, Dubai, U.A.E
+chartering@ybglobalshipping.com | www.ybglobalshipping.com
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+—-------------------------------------------------------------------------------------------------------
+Dear All, 
+Good day.
+Please provide suitable, rated vessels for our following firm requirements.
+* A/C SeaSchiffe
+* 1 TCT with Steels/Gens/lawfuls
+* 22k dwt upto HMAX
+* Delivery: ECI
+* Laycan: 15-18 July
+* Redel: Med via GOA transit
+* Duration: abt 35-40 days wog
+* 3.75% Adc
+—-----------------------------------------------------------------------------------------------------------
+* A/C SeaSchiffe
+* 1 TCT with Steels/Gens/lawfuls
+* 33k dwt upto HMAX
+* Delivery: ECI
+* Laycan: 21-23 July
+* Redel: ARAG via COGH transit
+* Duration: abt 50-55 days wog
+* 3.75% Adc
+We look forward to hearing from you.
+ 
+Best regards,
+Steve
+Sea Schiffe DMCC
+Skype: switson87
+M: +91-8459221078
+
+
+------------------------------------------------------------------------------------------------------------------------------------
+A/C Sea Schiffe Or Nominee
+* Coastal trip with harmless bulk / Minerals 
+* SMX / UMX (Max 20 yrs)
+* Delivery: Aps Kandla 
+* Laycan: 3rd - 5th July 
+* Redel: Wci 
+* Duration: abt 10-15 days wog
+* No Chinese / Pakistani Crew On Board
+* Coastal Permission/Duty On Charts Account
+* BOR as on Board
+* 3.75% Adc 
+—-----------------------------------------------------------------------------------------------
+ACCT : DAT
+ 
+DWT 35-42K
+DELY : TM S.E. ASIA (INT. PORT KELANG)
+LAYCAN : END OF JULY OWNARD
+REDELY : W.W.
+** CAN DO PERIOD UPTO MAX 1-YEAR
+
+
+—-----------------------------------------------------------------------------------------------------------------------------
+PLEASE PROPOSE FIRM, NAMED RATED TONNAGE FOR FOLLOWING ORDER :  
+ 
+ACCT CENTURION BULK
+SMX/UMX DELY BUKPYUNG/SKOREA 16-20 JULY
+TRIP WITH SLAG+CLINKER
+RDLY WCCA, INT NICARAGUA
+3.75PCT ADDCOM + 1.25% MSHIP
+
+TRY PERIOD
+
+
+—----------------------------------------------------------------------------------------------------------------------------
+ 
+ACCT  SEAWIND ( OUR USUAL ONE )
+- SMAX / UMAX (CAN TRY 50K DWT SUB INTAKE)
+- LAYCAN: 15-20 JULY (TRY EARLY)
+- DELY: APS KAKINADA
+- RE-DELY: W.AFR (EXCL HRA)
+- 1TCT WITH H'LESS BAGGED RICE
+- DURATION: ABT 70 DAYS WOG
+- NEED ICA
+- 3.75 PCT ADCOM HERE
+—------------------------------------------------------------------------------------------------------------------------------
+DELV:SANTOS / PARANAGUA RANGE
+REDLV:PG
+DURATION:40-50 DAYS WOG
+SPOT DATES
+3.75 PCT ADCOM 
+—----------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+VC Cargoes
+
+
+MCD LIDOMAR
+
+Att. Chartering Desk
+/Catalin
+Good day
+
+
+- 15-18'000 mt ferts  (NPK, not imo, stw=dwt)
+- Aqaba - Pivdenniy
+- 4000x/2000x
+- 15-25 July
+- 2.5 
+—-------------------------------------------------------------------------------------------------------------
+
+
+QUANTITY: M/M 20,000MT CALCIUM CARBONATE CHIPS (LIMESTONE GROUP C) DEADWEIGHT STOWING CARGO, AS FULL / SOLE CARGO. NO OTHER PART CARGO ALLOWED
+- LOADING PORT : LUMUT 
+- DISCHARGE PORT : 1/1 HAZIRA & 1/2 SPSB MUMBAI
+- LOAD RATE 4000MT SHINC
+- DISRATE AT HAZIRA 4000MT SHEXEIU 
+- DISRATE AT MUMBAI 2500MT  SHEXEIU
+- MIN 3 X 30MT SWL CRANES
+- FREIGHT INVITE OWNERS BEST IN FIOST TERMS
+- MAX 15 YEARS / IACS CLASS
+- 3.75 IAC
+LAYCAN 22ND JULY
+
+—------------------------------------------------------------------------------------------------------------------------
+
+
+1.  4400MT STL COILS 5% MOLCO
+FILO
+ CQD BENDS
+22-25/JUL,
+BAHODOPI TO SURABAYA
+ CARGO READY 23RD/JUL
+—------------------------------------------------------------------------------------------------------------------------------
+
+
+
+20-30,000 mts iron slag in bulk
+LP:Bushehr
+DP: Doha
+10000/12000
+25-30 july
+3.75% TTL 
+—-----------------------------------------------------------------------------------------------------------------------
+
+
+Cargo:30,000 mts of Urea in bulk
+POL: BIk
+POD: Iskenderun or Durban
+5000/5000
+LAYCAN: 16-20 July
+COMM:1.25% TTL 
+
+—--------------------------------------------------------------------------------------------------------------------------
+30,000 +-10% metric tons (combined)
+Commodity:
+Maize (Corn) – HS Code: 1005
+Soybean Meal – HS Code: 2304
+Cargo Readiness Date: Between 1 July 2025 and 20 July 2025
+Port of Loading: San Lorenzo, Argentina
+LOADING RATE 6000 Shex uu Mt/day
+Port of Discharge: Hodeidah, Yemen
+DISCHARGING RATE 3000 fhinc Mt/day
+Fios
+3.75 ADDCOM 
+
+—-------------------------------------------------------------------------------------------------------------------------
+45.000 mts Soybean meal in bulk %10 more or less in owners option
+Loading : Upriver
+8000 sat noon shex
+Discharging : Bik
+6000 fshex
+Laycan 1-10 Aug
+3.75 add comm 
+—-----------------------------------------------------------------------------------------------------------------------
+
+60,000 mts +/-10 corn in bulk
+LP: Paranagua or santos
+DP: BIK
+10000shex/6000shinc
+Prompt onwards
+2.5% addcomm 
+—------------------------------------------------------------------------------------------------------------------------
+Tonnages
+
+MV ADRE    
+IMO NO: 9575199    
+DELIVERY DATE: 12/2012 @ YANGZHOU DAYANG SHIPBUILDING, NANTONG P.R.CHINA
+FLAG – Liberia   
+CLASS – LR
+TYPE OF VESSEL – BULK CARRIER
+(Fully fitted to carry grains and in a thoroughly efficient state to trade dry bulk cargoes)  	 
+GRT – 35,812 NRT – 21,224   
+DEADWEIGHT – 63,301 MT @ 13.30 M SSW   TPC – 62.13 MT   
+LOA – 199.990 M   
+LBP – 193.74 M   	 
+BEAM – 32.26 M   
+DEPTH – 18.50 M    
+77,492.50 CBM GRAIN IN 5HOHA 
+CRANE – 36.00 MT (Hook) X 4SETS, 28.8 MT (Grab)  
+GRABS – 4 X 20 CBM GRABS
+IN CASE CHARTERERS WILL USE VESSEL'S GRABS, THEY HAVE TO INFORM MASTER WITH FULL
+DESCRIPTION OF THE CARGO AND ITS ACTUAL / CORRECT DENSITY SO AS TO ADJUST THE GRABS IF
+NECESSARY.
+ 
+SPEED/CONSUMPTION:  	 
+-----------------    
+FULL:   
+ABT 13.5KNOTS (B) ON ABT 24.5 MT VLSFO/DAY + ABT 0.2 MT LSMGO/DAY    
+ABT 13.0KNOTS (L) ON ABT 28.0 MT VLSFO/DAY + ABT 0.2 MT LSMGO/DAY    
+ECO:    
+ABT 12.00 KNOTS (B) ON ABT 20.0 MT VLSFO/DAY + ABT 0.2 MT LSMGO/DAY    ABT 12.00 KNOTS (L) ON ABT 23.0 MT VLSFO/DAY + ABT 0.2 MT LSMGO/DAY    
+ABOVE SPEED/CONSUMPTION ARE IN GOOD WEATHER CONDITIONS UP TO AND INCLUDING BEAUFORT SCALE FORCE 4, AND DOUGLAS SEA STATE SCALE 3/ SMOOTH SEAS, AS DEFINED WAVE AND SWELL HEIGHT OF 1.25M, NO NEGATIVE INFLUENCE OF SWELL AND NO ADVERSE CURRENT.  THE EFFECT OF POSITIVE CURRENT NOT TO BE ACCOUNTED AGAINST VESSEL.
+ALL DETAILS ABOUT, ABOUT IS UNDERSTOOD TO MEAN 0.5 KNTS DOWNWARDS IN THE SPEED AND 5%.  
+VESSEL MAY CONSUME MDO/MGO FOR MAIN ENGINE WHEN STEAMING IN SHALLOW, CONFINED WATERS, MANOEUVRING IN/OUT PORT(S), TRANSITING CANALS AND ALSO HAS LIBERTY TO CONSUME AUXILIARY ENGINE WHEN STARTING, STOPPING AND WORKING WITH LOW LOAD.  
+ 
+IN PORT:   
+IDLE: ABT 3.0 MT VLSFO AND ABT 0.5 MT LSMGO  
+WORKING: ABT 4.0 MT VLSFO AND ABT 0.5 MT LSMGO
+ 
+IN CASE VERY WARM OR COLD WEATHER WHEN HEATING/COOLING IS REQUIRED, ABT 3.0 MTS PER DAY REQUIRED.    
+ALLOW ADDITIONAL 3.0 MT PER DAY IFO FOR 2ND AUX WHEN BALLAST / DE-BALLAST / BALLAST   WATER EXCHANGE OPERATIONS.   
+ 
+ 
+PLS PPSE
+ —-----------------------------------------------------------------------------------------------------------------------------------
+ 
+MV SHENG PING HAI (57K) OPEN GUANGZHOU,CHINA 30TH JUL, 2025
+
+—-----------------------------------------------------------------------------------------------------------------------
+
+OPEN TAIPEI / 22ND JULY 2025
+ 
+ 
+MV WAN MING HE XIE
+==============
+IMO: 9955337 FLAG: BISSAU  CLASS: UMB
+YARD:Wanlong ship heavy industry co.,ltd,Taizhou,China  Built: AUG 8,2022
+TYPEOF VESSEL :SINGLEDECK,SELFTRIMMING BULK CARRIER
+TYPE OF HATCHCOVERS:Hydraulic Folding Type
+P&I CLUB: SKULD / H&M:PICC
+SUMMER DWT ,DRAFT : 50918.9 MT ON 11.5M
+LIGHTSHIP WEIGHT:8469.6MT SUMMMER DISPLACEMENT:59356.4MT
+LOA: 189.9 M BEAM: 31.0 M DEPTH:16.0M
+TPC: 56.3
+INTERNATIONAL GRT/NRT: 28194MT/15788MT
+HATCH SIZE:NO.1)20.8X18M   NO.2-3)28.8X18M   NO.4)26.0 X18M
+HO/HA: 4/4
+HOLD NO1.)13848.0  2)17971.0  3)17581.0  4)14838.0CBM
+Grain Capacity: 64240.34CBM
+FUEL TANK CAPACITY:LSFO 610CBM  LSMGO 80CBM,NO BALLAST CARGO HOLD.
+Cranes: No
+Grabs: No
+SPEED/ CONSUMPTION DAILY AT SEA:
+ NORMAL S/C:
+LADEN: ABT 10.30 KTS ON ABT 15.50MT LSFO180+ MD/GO 1.4MT AT SEA
+BALLAST: ABT 11.0 KTS ON ABT 15.00MT LSFO180 + MD/GO 1.4 MT AT SEA
+ECO SPD/CONSIMPTION:
+ADDITIONAL ：
+BASLLAST EXCHANGE, BALLASTING OR DEBALLASTING OPERATION AT SEA ADDITIONAL ABOUT 2.5 MT/DAY LSMGO TO BE USED.
+ 
+ECO S/C WOG:
+LADEN: ABT 10.0 KTS ON ABT 15.00 MT LSFO180 + MD/GO 1.4 MT AT SEA
+BALLAST: ABT 10.50 KTS ON ABT 14.50 MT LSFO180 + MD/GO 1.4 MT AT SEA
+ 
+EXCL SAILING IN/OUT PORT A/O RESTRICTED AREAS (INCLUDING D/G CONSUMPTION):
+ 
+ IN PORT CONSUMPTION：
+IDLE:  ABOUT 1.5MT LSMGO/DAY FOR GE+ ABOUT 1.3MT LSMGO/DAY FOR BOILER WITHOUT BALLAST WATER OPERATION.
+ 
+WORKING: ABOUT 1.5MT LSMGO/DAY FOR GE WITHOUT BALLAST WATER OPERATION 24HOURS + ABOUT 1.3 MT LSMGO/DAY FOR BOILER WITHOUT AIR CONDITIONING HEATING CONDITIONS.
+FOR DRIFTING AT SEA, ABOUT 1.5 MT LSFO/DAY FOR GE +1.3 MT LSMGO PER DAY TO BE USED FOR BOILER
+ 
+Speed/ Cons :
+THE WORD ABOUT IN SPEED/CONSUMPTION REFERS TO AN ALLOWANCE OF - 0.5 KNOTS ON SPEED AND +5% ON BUNKER CONSUMPTION RESPECTIVELY BOTH ALWAYS IN VESSEL’S FAVOUR ANY GAIN ON TIME AND/OR CONSUMPTION TO BE SET OFF AGAINST LOSS OF TIME AND/OR CONSUMPTION – IF ANY.
+ALL ABOVE UNDER GOOD WEATHER CONDITIONS( GOOD WEATHER MEANS CONTINUOUSLY 24 HOURSFROM NOON TO NOON)UPTO BF4 AND DSS 3(MEANS SIGNIFICANT WAVE HEIGHT LESS THAN1.25M)AND NO NEGATIVE SWELL AND NO ADVERSE CURRENT(POSITIVE CURRENT IN OWNER’S FAVOR),EXCLUDING BALLASTING/DE BALLASTING /MANEUVERING OPERATIONS/COSTAL NAVAGITION
+VSL HAS LIBERTY TO BURN MDO WHEN MANOEUVRING IN CANLS,RIVERS,CHANNELS,SHALLOW/NARROW/RESTRICTED WATERS,WHEN STARTING ENGINE AND MANOEUVRING IN BAD WEATHER ,IN/OUT PORT
+VESSEL'S MAIN ENGINE MUST OPERATE FULL POWER FOR 4 HOURS EVERY TWO DAYS
+ALL DETAILS ABT 
+SLOW STEAMING :
+CHARTERS OPTION TO ORDER THE VESSEL TO PROCEED AT REDUCED SPEED/ RPM' S WHICH ALWAYS TO BE IN ACCORDANCE WITH MASTER’S CFM/ SATISFACTION. ANY SPEED DIFFERENT FROM CP SPEED TO BE CONSIDERED AS WITHOUT GUARANTEE I.E.CHARTERERS WILL NOT BE ENTITLED TO CLAIM ANY UNDERPERFORMANCE/OVERCONSUMPTION.
+SOLAS CHAP V Reg 10- 1
+VESSEL USES IFO AND/OR LSMGO FOR STARTSTOP OF MAIN ENGINE AND START/STOP OFGENERATORS AND BOILER, VESSEL, MAY USE MGO WHEN MANOEUVERING,CHANGINGBALLAST WATER AT SEA,BALLASTINGDEBALLASTING, CLEANING VESSEL'S HOLDS, ATSTANDBY, WHEN SAILING WITH REDUCED SPEED, WHEN SAILING IN SHALLOW/RESTRICTEDWATERS, WHEN APPROACHING/ENTERING/LEAVING PORTS, RIVERS, CANALS.  FOR SAFETYREASONS.  MASTERS DISCRETION FOR SAFE NAVIGATION, THE MASTER SHALL NOT BE CONSTRAINED BY THE SHIPOWNER,CHARTES OR ANY OTHER PERSONS FROM TAKING ANY DECISION WHICH,IN THE PROFESSIONAL JUDGEMENT OF THE MASTERIS NECESSARY FOR SAFE NAVIGATION,  IN PARTICLAR IN SEREVE WEATHER IN   HEAVY SEAS.
+VLSFO SPEC : ISO 8217 :2017 max0.5% sulphur m/m
+LSMGO SPEC : ISO 8217 :2017  max0.1% sulphur m/m
+BIMCO 2020 MARINE FUEL SULPHUR CONTENT CLAUSE FOR TIME CHARTER PARTIES TO APPLY.
+BUNKER SAVINGS IN CASE SPEED DEFICIENCY,IF ANY, MAY BE OFFSET AGAINTS TIME LOST ENROUTE.
+BWTS with electrolysis :min 4% SW ballast to ttl ballast qty to be retained onboard for operation in FW/BW.
+THE ASSESSMENT OF GOOD WEATHER TIME SHALL BASE ON ANY CONSECUTIVE 24 HOURS GOOD WEATHER PERFORMANCE, ANY CLAIMS ARISING THERE FROM SHALL BE RESTRICTED TO THAT GOOD WEATHER PERIOD ONLY, AND NO CLAIMS WHATSOEVER MAYBE BROUGHT FOR UNDER PERFORMANCE, LOSS OF TIME, OR OVER-CONSUMPTION DURING PERIODS OF TIME THAT ARE NOT GOOD WEATHER. POSITIVE CURRENT FACTOR ON SHIP'S FAVOR.
+ALL DETAILS ABOUT  / IN GOOD FAITH AND WITHOUT GUARANTEE
+
+—----------------------------------------------------------------------------------------------------------------------------
+
+
+M/V EURO BAND /'09/BC/58K DWT/ 30MT+GR - OPEN AG INT KUWAIT ON 16-21 OCT 2025
+- FLEXIBLE CARGO/TRADING
+- BSEA,BALTIC HRA/GOA/WAFR HRA/VENEZVELA OK
+- 2*25, DECK, HBI OK
+ 
+
+VESSEL’S DESCRIPTION
+MV EURO BAND
+TYPE OF VESSEL: BULK CARRIER
+BUILT: APRIL 2009, FLAG: PANAMA
+DWT / DRAFT: SUMMER SALT WATER: 58,761 MT / 12.828 M
+GROSS TONNAGE: 32,379 NET TONNAGE: 19,353
+LOA: 189.99 M BEAM: 32.26 M LBP: 185.60 M DEPTH MOULDED: 18.00 M
+CARGO GEAR: YES X 4 X 30 MT SWL
+CARGO GEAR WITH GRABS: 4X 24 MT SWL
+GRABS: YES
+GRAIN CAPACITY:
+NO. 1: 12,361.2 CBM
+NO. 2: 15,976.4 CBM
+NO. 3: 14,510.6 CBM
+NO. 4: 15,971.0 CBM
+NO. 5: 13,541.1 CBM
+BALE CAPACITY:
+NO. 1: 11,900.5 CBM
+NO. 2: 15,625.2 CBM
+NO. 3: 14,163.7 CBM
+NO. 4: 15,608.8 CBM
+NO. 5: 13,259.6 CBM
+SPEED / CONSUMPTION:
+LADEN VOYAGE
+11.00 KNOTS ON 20.0 MT VLSFO + 0.1 MT LSMGO
+12.00 KNOTS ON 24.0 MT VLSFO + 0.1 MT LSMGO
+BALLAST VOYAGE
+12.00 KNOTS ON 18.0 MT VLSFO + 0.1 MT LSMGO
+13.00 KNOTS ON 21.0 MT VLSFO + 0.1 MT LSMGO
+IDLE: 2.5 MT/DAY VLSFO + 0.1 MT/DAY LSMGO
+WORKING: 5.5 MT/DAY VLSFO + 0.5 MT/DAY LSMGO
+
+ALL DETAILS ABOUT WOG
+ 
+—-----------------------------------------------------------------------------------------------------------------------
+
+
+MV XIN HAI TONG 38 2011BLT  56635DWT  4X30MT CRANE WILL OPEN UMM QASAR, IRAQ O/A 16-21 OCT 2025 IAGW WP.
+BOD: LSIFO ABT 350-450 MT/ LSMGO ABT 50-150 MT.
+LAST 3 CARGO: WHEAT(CURRENT)--GENERAL CARGO--IRON ORE FINES
+ 
+ 
+1. NAME: MV XIN HAI TONG 38  
+2. TYPE: GEARED, SINGLE DECK BULK CARRIER
+3. BUILT: AUG 2011
+4. FLAG: PRC
+5. GRT/NRT INTERNATIONAL: 32962MT/19142MT
+6. LOA / LBP / BEAM / DEPTH MOUDED: 189.99M / 185.00M / 32.26M / 18.00M
+7. LOADING INFORMATION BSS SW (S.G.1.025)
+LOADLINE DEADWEIGHT           DRAFT       
+SUMMER:       56635.8                     12.800M
+WINTER:        55065.1                     12.533M
+TROPICAL:      58209.1                     13.067M 
+TPC AT SUMMER DRAFT: 58.8
+8. CARGO GEARS: 4 CRANES ON DECK SWL 30 MT
+–GRABS (SMAG ELECTRO-HYDRAULIC ) ：4*6-12CUMT GRAB
+9. H/H: 5/5
+10. TYPE OF HATCH COVERS: HYDRAULIC FOLDING COVER
+11. GRAIN & BALE CAPACITY (INCL HATCH WAYS)
+HOLD WISE   BALE (M3)      GRAIN (M3)
+HOLD 1          12300                13009.86
+HOLD 2          14700                15333.25
+HOLD 3          14000                14553.08
+HOLD 4          14700                15333.27
+HOLD 5          12500                13404.64
+------------------------------------------------
+TOTAL           68200                71634.09
+ 
+12. SPEED/CONSUMPTION: 
+BALLAST: ABT 12.0 KNOTS ON ABT 20.0 MT LSIFO + 0.1 MT LSMGO
+LADEN:      ABT 12.0 KNOTS ON ABT 21.0 MT LSIFO + 0.1 MT LSMGO
+ALWAYS PLUS EXTRA ABT 1.5MT FOR WINTER/COLD SEASON IF TEMPERATURE IS LESS THAN 10℃
+ 
+AT PORT: 
+IDLE：   ABT 2.0 MTS LSIFO + 0.1 MTS LSMGO PER DAY
+WORKING：ABT 4.5 MTS LSIFO + 0.1 MTS LSMGO  PER DAY
+ 
+ADDITIONAL ABT 4.5 MT VLSFO DAILY FOR BALLAST/DEBALLAST
+ADDITIONAL ABT 1.5 MT VLSFO DAILY FOR BOILER CONSUMPTION WITH
+TEMPERATURE LESS THAN 10 DEGREE CENTIGRADE.
+ 
+(A) AVERAGE SPEED AND AVERAGE CONSUMPTION TO BE CALCULATED FROM SEA BUOY TO SEA BUOY EXCLUDING PERIODS OF SLOW STEAMING ON CHARTERERS ORDER OR FOR REASONS OF SAFETY OR STANDING BY OR ASSISTING ANOTHER VESSEL IN DISTRESS.
+(B)SPEED AND CONSUMPTION BASIS GOOD WEATHER CONDITIONS. GOOD WEATHER DEFINITION AS PER OWNERS CP, EXTRAPOLATION OF “GOOD WEATHER” PERFORMANCE FOR “BAD WE ATHER” PERIODS IS NOT ALLOWED.
+(C)VESL MAY BURN SMALL QTYS OF LSMGO WHEN MANEUVERING IN SHALLOW&NARROW WATERS ENTERING/LEAVING PORTS/IN HEAVY WEATHER/CANAL/RIVER/BALLAST/DEBALLAST ETC.
+(D) 0.5 KNOT ALLOWANCE TO BE APPLIED FOR SPEED ASSESSMENT, 5% ALLOWANCE FOR OWNER TO BE APPLIED TO BUNKER CONSUMPTION.
+(E) BUNKER SAVING TO OFFSET ANY TIME LOST AND VICE VERSA.
+(F) BUNKER SUPPLIED BEING OF ISO8217:2017 (E)  SPECIFICATION, OR 2010, IF 2017 IS NOT AVAILABLE 
+= ALL DETAILS ABOUT=
+—-----------------------------------------------------------------------------------------------------------------------
+
+MV SF DARIKA / 35.2K -
+“ OPEN VIZAG 14/22 OCT  2026 ”
+ 
+- EEXI COMPLIANT
+- VSL HOLDS ARE GRAIN CLEAN
+- FULLY FTTED LOGGER
+- CAN DO STEEL COILS – 15 T COIL – 3 TIERS AND 20 T COIL – 2 TIERS
+- CO2 FITTED
+- A60 STEEL BULKHEAD
+- CAN TRY 1 TCT / 2LL /VOYAGE/
+- NO RED SEA/GOA/HRA
+ 
+ 
+MV SF DARIKA ‘EX TASMAN SPIRIT’
+TYPE:SDBC,LOGGER WITH ENGINE/BRIDGE AFT
+CLASSIFICATION: KR
+IMO NUMBER: 9502752   CALL SIGN: V7A4814
+FLAG: THAI
+TYPE: BULK CARRIER, LOGGER WITH ENGINE/BRIDGE AFT
+BUILT: NANTONG CHANGQINGSHA SHIPYARD, CHINA, 2010
+GROSS TONNAGE: 22,402
+NET TONNAGE: 12,019
+VESSEL DIMENSIONS:
+L.O.A.: 179.90 M
+L.B.P.: 171.50 M
+BEAM: 28.44 M
+DEPTH MOULDED: 15.0 M
+DEADWEIGHT/DRAFT:
+SUMMER: 35237.0 MTS ON 10.816 METERS
+WINTER: 34193.9 MTS ON 10.591 METERS
+TROPICAL: 36286.3 MTS ON 11.041 METERS 
+
+—-----------------------------------------------------------------------------------------------------------------------
+
+AA) MV NEW MOMENTUM (39K/'18) / OPEN MUMBAI, INDIA O/A 15 - 20 MAR 2026
+
+- LAST CGO : STEEL (LAST) – DRYDOCK – GRAIN – STEEL – GRAIN
+- EST. BOD VLSFO ABT 400/450MT AND LSMGO ABT 200MT
+
+
+
+
+—------------------------------------------------------------------------------------------------------------------ 
+ 
+BB) MV PAN MAJESTY (63K/'16/HANTONG) / OPEN AT PORBANDAR, INDIA O/A 26 - 28TH MAR, 2026
+ 
+- BOD QTY : ABT 750-850MT HSFO / ABT 50-150MT LSMGO
+- LAST CARGOS : COAL (LAST) - POTASH - POTASH - N.ORE – GRAIN
+ 
+—----------------------------------------------------------------------------------------------------------------------------
+
+
+ 
+CC) MV PAN NOVA (37K/20’) /  OPEN LANSHAN, CHINA 27 – 31 MAR, 2026
+ 
+- FULLY FITTED LOGGER /  AFF 1
+- LAST CGOS : LOG (CURRENT) – FERTS – LOG – PETCOKE – LOG
+- BOD : ABT 800-900 MT VSLFO / ABT 80-100 MT LSMGO
+—-----------------------------------------------------------------------------------------------------------------------
