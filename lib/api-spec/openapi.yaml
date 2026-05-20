@@ -53,6 +53,29 @@ paths:
         "400":
           description: Bad request
 
+  /emails/extract/json:
+    post:
+      operationId: extractEmailJson
+      tags: [extraction]
+      summary: Extract maritime email and return pure enterprise JSON array
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExtractionInput"
+      responses:
+        "200":
+          description: Enterprise JSON array of extracted entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EnterpriseEntry"
+        "400":
+          description: Bad request
+
   /emails:
     get:
       operationId: listExtractions
@@ -196,6 +219,94 @@ components:
         subject:
           type: ["string", "null"]
 
+    EnterpriseEntry:
+      type: object
+      required:
+        - email_type
+        - vessel_name
+        - vessel_type
+        - dwt
+        - cargo
+        - cargo_type
+        - load_port
+        - discharge_port
+        - open_port
+        - open_date
+        - close_date
+        - laycan_start
+        - laycan_end
+        - quantity
+        - quantity_unit
+        - load_rate
+        - discharge_rate
+        - commission
+        - imo
+        - grt
+        - nrt
+        - loa
+        - beam
+        - grain_capacity
+        - restrictions
+        - matching_region
+        - confidence_score
+      properties:
+        email_type:
+          type: string
+        vessel_name:
+          type: string
+        vessel_type:
+          type: string
+        dwt:
+          type: string
+        cargo:
+          type: string
+        cargo_type:
+          type: string
+        load_port:
+          type: string
+        discharge_port:
+          type: string
+        open_port:
+          type: string
+        open_date:
+          type: string
+        close_date:
+          type: string
+        laycan_start:
+          type: string
+        laycan_end:
+          type: string
+        quantity:
+          type: string
+        quantity_unit:
+          type: string
+        load_rate:
+          type: string
+        discharge_rate:
+          type: string
+        commission:
+          type: string
+        imo:
+          type: string
+        grt:
+          type: string
+        nrt:
+          type: string
+        loa:
+          type: string
+        beam:
+          type: string
+        grain_capacity:
+          type: string
+        restrictions:
+          type: array
+          items:
+            type: string
+        matching_region:
+          type: string
+        confidence_score:
+          type: number
+
     ExtractionJob:
       type: object
       required:
@@ -221,10 +332,8 @@ components:
         pipeline:
           type: string
           enum: [rule-based, template, llm-fallback]
-          description: Which pipeline layer handled this email
         confidence:
           type: number
-          description: Confidence score 0-1
         extractedEntries:
           type: array
           items:
@@ -302,6 +411,24 @@ components:
           type: ["string", "null"]
         dwt:
           type: ["string", "null"]
+        imo:
+          type: ["string", "null"]
+        grt:
+          type: ["string", "null"]
+        nrt:
+          type: ["string", "null"]
+        loa:
+          type: ["string", "null"]
+        beam:
+          type: ["string", "null"]
+        grain_capacity:
+          type: ["string", "null"]
+        load_rate:
+          type: ["string", "null"]
+        discharge_rate:
+          type: ["string", "null"]
+        commission:
+          type: ["string", "null"]
         pic:
           type: ["string", "null"]
         email_id:
@@ -312,10 +439,6 @@ components:
           type: ["string", "null"]
         reason:
           type: ["string", "null"]
-        latitude:
-          type: ["number", "null"]
-        longitude:
-          type: ["number", "null"]
 
     ExtractionListResponse:
       type: object

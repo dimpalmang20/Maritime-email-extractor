@@ -6,9 +6,6 @@
  * OpenAPI spec version: 0.1.0
  */
 
-/**
- * Which pipeline layer handled this email
- */
 export type ExtractionJobPipeline = typeof ExtractionJobPipeline[keyof typeof ExtractionJobPipeline];
 
 

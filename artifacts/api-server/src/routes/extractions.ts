@@ -2,7 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { extractionJobsTable } from "@workspace/db";
 import { eq, desc, count, avg, sql } from "drizzle-orm";
-import { extractMaritimeEmail } from "../lib/maritime-extractor";
+import { extractMaritimeEmail, extractToEnterpriseJSON } from "../lib/maritime-extractor";
 
 const router = Router();
 
@@ -44,6 +44,18 @@ router.post("/emails/extract", async (req, res) => {
     estimatedCostUsd: job.estimatedCostUsd,
     createdAt: job.createdAt.toISOString(),
   });
+});
+
+router.post("/emails/extract/json", async (req, res) => {
+  const { emailText } = req.body as { emailText?: string };
+
+  if (!emailText || typeof emailText !== "string" || emailText.trim().length < 10) {
+    res.status(400).json({ error: "emailText is required and must be at least 10 characters" });
+    return;
+  }
+
+  const entries = extractToEnterpriseJSON(emailText.trim());
+  res.json(entries);
 });
 
 router.get("/emails", async (req, res) => {

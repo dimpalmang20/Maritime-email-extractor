@@ -33,8 +33,8 @@ export const ExtractEmailResponse = zod.object({
   "emailText": zod.string(),
   "subject": zod.string().nullish(),
   "emailType": zod.enum(['VC', 'TC', 'Tonnage', 'Mixed', 'Unknown']),
-  "pipeline": zod.enum(['rule-based', 'template', 'llm-fallback']).describe('Which pipeline layer handled this email'),
-  "confidence": zod.number().optional().describe('Confidence score 0-1'),
+  "pipeline": zod.enum(['rule-based', 'template', 'llm-fallback']),
+  "confidence": zod.number().optional(),
   "extractedEntries": zod.array(zod.object({
   "entryType": zod.enum(['VC', 'TC', 'Tonnage']),
   "confidence": zod.number(),
@@ -61,13 +61,20 @@ export const ExtractEmailResponse = zod.object({
   "laycan_end_date": zod.string().nullish(),
   "duration": zod.string().nullish(),
   "dwt": zod.string().nullish(),
+  "imo": zod.string().nullish(),
+  "grt": zod.string().nullish(),
+  "nrt": zod.string().nullish(),
+  "loa": zod.string().nullish(),
+  "beam": zod.string().nullish(),
+  "grain_capacity": zod.string().nullish(),
+  "load_rate": zod.string().nullish(),
+  "discharge_rate": zod.string().nullish(),
+  "commission": zod.string().nullish(),
   "pic": zod.string().nullish(),
   "email_id": zod.string().nullish(),
   "phone_number": zod.string().nullish(),
   "restriction": zod.string().nullish(),
-  "reason": zod.string().nullish(),
-  "latitude": zod.number().nullish(),
-  "longitude": zod.number().nullish()
+  "reason": zod.string().nullish()
 })
 })),
   "processingMs": zod.number(),
@@ -75,6 +82,50 @@ export const ExtractEmailResponse = zod.object({
   "estimatedCostUsd": zod.number(),
   "createdAt": zod.string()
 })
+
+
+/**
+ * @summary Extract maritime email and return pure enterprise JSON array
+ */
+export const extractEmailJsonBodyEmailTextMin = 10;
+
+
+
+export const ExtractEmailJsonBody = zod.object({
+  "emailText": zod.string().min(extractEmailJsonBodyEmailTextMin),
+  "subject": zod.string().nullish()
+})
+
+export const ExtractEmailJsonResponseItem = zod.object({
+  "email_type": zod.string(),
+  "vessel_name": zod.string(),
+  "vessel_type": zod.string(),
+  "dwt": zod.string(),
+  "cargo": zod.string(),
+  "cargo_type": zod.string(),
+  "load_port": zod.string(),
+  "discharge_port": zod.string(),
+  "open_port": zod.string(),
+  "open_date": zod.string(),
+  "close_date": zod.string(),
+  "laycan_start": zod.string(),
+  "laycan_end": zod.string(),
+  "quantity": zod.string(),
+  "quantity_unit": zod.string(),
+  "load_rate": zod.string(),
+  "discharge_rate": zod.string(),
+  "commission": zod.string(),
+  "imo": zod.string(),
+  "grt": zod.string(),
+  "nrt": zod.string(),
+  "loa": zod.string(),
+  "beam": zod.string(),
+  "grain_capacity": zod.string(),
+  "restrictions": zod.array(zod.string()),
+  "matching_region": zod.string(),
+  "confidence_score": zod.number()
+})
+export const ExtractEmailJsonResponse = zod.array(ExtractEmailJsonResponseItem)
 
 
 /**
@@ -95,8 +146,8 @@ export const ListExtractionsResponse = zod.object({
   "emailText": zod.string(),
   "subject": zod.string().nullish(),
   "emailType": zod.enum(['VC', 'TC', 'Tonnage', 'Mixed', 'Unknown']),
-  "pipeline": zod.enum(['rule-based', 'template', 'llm-fallback']).describe('Which pipeline layer handled this email'),
-  "confidence": zod.number().optional().describe('Confidence score 0-1'),
+  "pipeline": zod.enum(['rule-based', 'template', 'llm-fallback']),
+  "confidence": zod.number().optional(),
   "extractedEntries": zod.array(zod.object({
   "entryType": zod.enum(['VC', 'TC', 'Tonnage']),
   "confidence": zod.number(),
@@ -123,13 +174,20 @@ export const ListExtractionsResponse = zod.object({
   "laycan_end_date": zod.string().nullish(),
   "duration": zod.string().nullish(),
   "dwt": zod.string().nullish(),
+  "imo": zod.string().nullish(),
+  "grt": zod.string().nullish(),
+  "nrt": zod.string().nullish(),
+  "loa": zod.string().nullish(),
+  "beam": zod.string().nullish(),
+  "grain_capacity": zod.string().nullish(),
+  "load_rate": zod.string().nullish(),
+  "discharge_rate": zod.string().nullish(),
+  "commission": zod.string().nullish(),
   "pic": zod.string().nullish(),
   "email_id": zod.string().nullish(),
   "phone_number": zod.string().nullish(),
   "restriction": zod.string().nullish(),
-  "reason": zod.string().nullish(),
-  "latitude": zod.number().nullish(),
-  "longitude": zod.number().nullish()
+  "reason": zod.string().nullish()
 })
 })),
   "processingMs": zod.number(),
@@ -153,8 +211,8 @@ export const GetExtractionResponse = zod.object({
   "emailText": zod.string(),
   "subject": zod.string().nullish(),
   "emailType": zod.enum(['VC', 'TC', 'Tonnage', 'Mixed', 'Unknown']),
-  "pipeline": zod.enum(['rule-based', 'template', 'llm-fallback']).describe('Which pipeline layer handled this email'),
-  "confidence": zod.number().optional().describe('Confidence score 0-1'),
+  "pipeline": zod.enum(['rule-based', 'template', 'llm-fallback']),
+  "confidence": zod.number().optional(),
   "extractedEntries": zod.array(zod.object({
   "entryType": zod.enum(['VC', 'TC', 'Tonnage']),
   "confidence": zod.number(),
@@ -181,13 +239,20 @@ export const GetExtractionResponse = zod.object({
   "laycan_end_date": zod.string().nullish(),
   "duration": zod.string().nullish(),
   "dwt": zod.string().nullish(),
+  "imo": zod.string().nullish(),
+  "grt": zod.string().nullish(),
+  "nrt": zod.string().nullish(),
+  "loa": zod.string().nullish(),
+  "beam": zod.string().nullish(),
+  "grain_capacity": zod.string().nullish(),
+  "load_rate": zod.string().nullish(),
+  "discharge_rate": zod.string().nullish(),
+  "commission": zod.string().nullish(),
   "pic": zod.string().nullish(),
   "email_id": zod.string().nullish(),
   "phone_number": zod.string().nullish(),
   "restriction": zod.string().nullish(),
-  "reason": zod.string().nullish(),
-  "latitude": zod.number().nullish(),
-  "longitude": zod.number().nullish()
+  "reason": zod.string().nullish()
 })
 })),
   "processingMs": zod.number(),

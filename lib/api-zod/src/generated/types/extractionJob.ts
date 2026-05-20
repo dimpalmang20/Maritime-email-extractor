@@ -15,9 +15,7 @@ export interface ExtractionJob {
   /** @nullable */
   subject?: string | null;
   emailType: ExtractionJobEmailType;
-  /** Which pipeline layer handled this email */
   pipeline: ExtractionJobPipeline;
-  /** Confidence score 0-1 */
   confidence?: number;
   extractedEntries: ExtractedEntry[];
   processingMs: number;

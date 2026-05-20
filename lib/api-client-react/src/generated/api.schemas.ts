@@ -16,6 +16,36 @@ export interface ExtractionInput {
   subject?: string | null;
 }
 
+export interface EnterpriseEntry {
+  email_type: string;
+  vessel_name: string;
+  vessel_type: string;
+  dwt: string;
+  cargo: string;
+  cargo_type: string;
+  load_port: string;
+  discharge_port: string;
+  open_port: string;
+  open_date: string;
+  close_date: string;
+  laycan_start: string;
+  laycan_end: string;
+  quantity: string;
+  quantity_unit: string;
+  load_rate: string;
+  discharge_rate: string;
+  commission: string;
+  imo: string;
+  grt: string;
+  nrt: string;
+  loa: string;
+  beam: string;
+  grain_capacity: string;
+  restrictions: string[];
+  matching_region: string;
+  confidence_score: number;
+}
+
 export type ExtractionJobEmailType = typeof ExtractionJobEmailType[keyof typeof ExtractionJobEmailType];
 
 
@@ -27,9 +57,6 @@ export const ExtractionJobEmailType = {
   Unknown: 'Unknown',
 } as const;
 
-/**
- * Which pipeline layer handled this email
- */
 export type ExtractionJobPipeline = typeof ExtractionJobPipeline[keyof typeof ExtractionJobPipeline];
 
 
@@ -101,6 +128,24 @@ export interface ExtractedFields {
   /** @nullable */
   dwt?: string | null;
   /** @nullable */
+  imo?: string | null;
+  /** @nullable */
+  grt?: string | null;
+  /** @nullable */
+  nrt?: string | null;
+  /** @nullable */
+  loa?: string | null;
+  /** @nullable */
+  beam?: string | null;
+  /** @nullable */
+  grain_capacity?: string | null;
+  /** @nullable */
+  load_rate?: string | null;
+  /** @nullable */
+  discharge_rate?: string | null;
+  /** @nullable */
+  commission?: string | null;
+  /** @nullable */
   pic?: string | null;
   /** @nullable */
   email_id?: string | null;
@@ -110,10 +155,6 @@ export interface ExtractedFields {
   restriction?: string | null;
   /** @nullable */
   reason?: string | null;
-  /** @nullable */
-  latitude?: number | null;
-  /** @nullable */
-  longitude?: number | null;
 }
 
 export interface ExtractedEntry {
@@ -129,9 +170,7 @@ export interface ExtractionJob {
   /** @nullable */
   subject?: string | null;
   emailType: ExtractionJobEmailType;
-  /** Which pipeline layer handled this email */
   pipeline: ExtractionJobPipeline;
-  /** Confidence score 0-1 */
   confidence?: number;
   extractedEntries: ExtractedEntry[];
   processingMs: number;

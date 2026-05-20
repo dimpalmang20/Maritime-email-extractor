@@ -7,6 +7,7 @@
  */
 
 export * from './activityPoint';
+export * from './enterpriseEntry';
 export * from './extractedEntry';
 export * from './extractedEntryEntryType';
 export * from './extractedEntryExtractionMethod';

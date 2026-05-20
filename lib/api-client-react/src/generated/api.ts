@@ -20,6 +20,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  EnterpriseEntry,
   ExtractionInput,
   ExtractionJob,
   ExtractionListResponse,
@@ -188,6 +189,77 @@ export const useExtractEmail = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getExtractEmailMutationOptions(options));
+    }
+
+export const getExtractEmailJsonUrl = () => {
+
+
+
+
+  return `/api/emails/extract/json`
+}
+
+/**
+ * @summary Extract maritime email and return pure enterprise JSON array
+ */
+export const extractEmailJson = async (extractionInput: ExtractionInput, options?: RequestInit): Promise<EnterpriseEntry[]> => {
+
+  return customFetch<EnterpriseEntry[]>(getExtractEmailJsonUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      extractionInput,)
+  }
+);}
+
+
+
+
+export const getExtractEmailJsonMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof extractEmailJson>>, TError,{data: BodyType<ExtractionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof extractEmailJson>>, TError,{data: BodyType<ExtractionInput>}, TContext> => {
+
+const mutationKey = ['extractEmailJson'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof extractEmailJson>>, {data: BodyType<ExtractionInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  extractEmailJson(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ExtractEmailJsonMutationResult = NonNullable<Awaited<ReturnType<typeof extractEmailJson>>>
+    export type ExtractEmailJsonMutationBody = BodyType<ExtractionInput>
+    export type ExtractEmailJsonMutationError = ErrorType<void>
+
+    /**
+ * @summary Extract maritime email and return pure enterprise JSON array
+ */
+export const useExtractEmailJson = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof extractEmailJson>>, TError,{data: BodyType<ExtractionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof extractEmailJson>>,
+        TError,
+        {data: BodyType<ExtractionInput>},
+        TContext
+      > => {
+      return useMutation(getExtractEmailJsonMutationOptions(options));
     }
 
 export const getListExtractionsUrl = (params?: ListExtractionsParams,) => {

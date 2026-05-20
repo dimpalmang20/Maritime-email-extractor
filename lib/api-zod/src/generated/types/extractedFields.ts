@@ -50,6 +50,24 @@ export interface ExtractedFields {
   /** @nullable */
   dwt?: string | null;
   /** @nullable */
+  imo?: string | null;
+  /** @nullable */
+  grt?: string | null;
+  /** @nullable */
+  nrt?: string | null;
+  /** @nullable */
+  loa?: string | null;
+  /** @nullable */
+  beam?: string | null;
+  /** @nullable */
+  grain_capacity?: string | null;
+  /** @nullable */
+  load_rate?: string | null;
+  /** @nullable */
+  discharge_rate?: string | null;
+  /** @nullable */
+  commission?: string | null;
+  /** @nullable */
   pic?: string | null;
   /** @nullable */
   email_id?: string | null;
@@ -59,8 +77,4 @@ export interface ExtractedFields {
   restriction?: string | null;
   /** @nullable */
   reason?: string | null;
-  /** @nullable */
-  latitude?: number | null;
-  /** @nullable */
-  longitude?: number | null;
 }
