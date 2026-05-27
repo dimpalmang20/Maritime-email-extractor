@@ -99,11 +99,15 @@ const REGION_MAP: Record<string, string> = {
   "S.E.ASIA": "South East Asia", SEASIA: "South East Asia", SEA: "South East Asia",
   AG: "Arabian Gulf", PG: "Persian Gulf", MED: "Mediterranean",
   BSEA: "Black Sea", BALTIC: "Baltic Sea", USEC: "US East Coast",
-  USGC: "US Gulf Coast", USWC: "US West Coast", WCCA: "West Coast Central America",
+  USGC: "US Gulf Coast", USG: "US Gulf Coast", USWC: "US West Coast",
+  WCCA: "West Coast Central America", WCSA: "West Coast South America",
   ECSA: "East Coast South America", GOA: "Gulf of Aden", ARAG: "Arabian Gulf",
   HRA: "High Risk Area", COGH: "Cape of Good Hope", WWW: "World Wide",
   WW: "World Wide", "W.W.": "World Wide", SPORE: "Singapore",
   SSPORE: "Singapore", SCHINA: "South China", NCHINA: "North China",
+  JAPAN: "Japan", "S.KOREA": "South Korea", SKOREA: "South Korea",
+  RECALADA: "East Coast South America", SANTOS: "East Coast South America",
+  HOUSTON: "US Gulf Coast", TAMPA: "US Gulf Coast",
 };
 
 const PORT_ABBREVS: Record<string, string> = {
@@ -130,10 +134,12 @@ const VESSEL_SIZE_MAP: Record<string, { min: number; max: number }> = {
   SMX: { min: 50000, max: 59999 }, SUPRA: { min: 50000, max: 59999 },
   ULTRAMAX: { min: 60000, max: 69999 }, UMAX: { min: 60000, max: 69999 },
   UMX: { min: 60000, max: 69999 }, ULTRA: { min: 60000, max: 69999 },
-  PANAMAX: { min: 70000, max: 79999 }, KAMSARMAX: { min: 80000, max: 89999 },
+  PANAMAX: { min: 70000, max: 79999 }, PMX: { min: 70000, max: 79999 },
+  KAMSARMAX: { min: 80000, max: 89999 }, KMAX: { min: 80000, max: 89999 },
   "BABY CAPE": { min: 90000, max: 199999 }, CAPESIZE: { min: 200000, max: 999999 },
   HANDYSIZE: { min: 10000, max: 39999 }, HANDY: { min: 10000, max: 39999 },
   CAPE: { min: 200000, max: 999999 }, POST: { min: 80000, max: 99999 },
+  SDBC: { min: 50000, max: 79999 },
 };
 
 const CARGO_TYPE_MAP: Record<string, string> = {
@@ -323,6 +329,18 @@ function parseLaycan(text: string): { start: string | null; end: string | null }
       const end = `${yr}-${m}-${d2.padStart(2, "0")}`;
       const fixed = fixDates(start, end);
       return { start: fixed.open, end: fixed.close };
+    }
+  }
+
+  // Pattern: "20 JULY ONWARDS" or "20 JULY 2025 ONWARDS" — open-ended start
+  const onwardsMatch = upper.match(/(\d{1,2})(?:ST|ND|RD|TH)?\s+([A-Z]+)(?:[,.\s]+(\d{4}))?\s+ONWARDS/);
+  if (onwardsMatch) {
+    const [, d, mon, yr] = onwardsMatch;
+    const m = MONTH_MAP[mon];
+    const year = yr ?? new Date().getFullYear().toString();
+    if (m) {
+      const start = `${year}-${m}-${d.padStart(2, "0")}`;
+      return { start, end: null };
     }
   }
 
@@ -526,7 +544,9 @@ function extractCommonTechnicalFields(segment: string): Partial<ExtractedFields>
     if (!isNaN(v) && v > 1000) fields.grain_capacity = v.toString();
   }
 
-  const commMatch = segment.match(PATTERNS.commission);
+  // Commission: "ADCOM: 3.75%" OR "3.75 ADDCOM PLUS" (number before keyword)
+  const commMatch = segment.match(PATTERNS.commission) ||
+    segment.match(/(\d+(?:\.\d+)?)\s+(?:ADDCOM|ADCOM)/i);
   if (commMatch) fields.commission = `${commMatch[1]}%`;
 
   const loadRateMatch = segment.match(PATTERNS.loadRate);
@@ -546,9 +566,49 @@ function extractCommonTechnicalFields(segment: string): Partial<ExtractedFields>
 
 // ─── Email Segmentation ───────────────────────────────────────────────────────
 
+function splitMultipleRequirements(text: string): string[] {
+  // TC circular emails repeat ACCT/DEL/LC/REDEL patterns for multiple requirements.
+  // Split at each line that starts with ACCT (2nd occurrence onwards).
+  const lines = text.split("\n");
+  const blocks: string[] = [];
+  let current: string[] = [];
+  let acctCount = 0;
+
+  for (const line of lines) {
+    const trimmed = line.trim().toUpperCase();
+    const isAcctLine = /^ACCT\s+/.test(trimmed);
+    if (isAcctLine) {
+      acctCount++;
+      if (acctCount > 1 && current.join("").trim().length > 20) {
+        blocks.push(current.join("\n").trim());
+        current = [];
+      }
+    }
+    current.push(line);
+  }
+  if (current.join("").trim().length > 20) blocks.push(current.join("\n").trim());
+  return blocks.length > 0 ? blocks : [text];
+}
+
 function segmentEmail(emailText: string): string[] {
-  const segments = emailText.split(/\n[-─—]{4,}\n/);
-  return segments.map(s => s.trim()).filter(s => s.length > 20);
+  // Primary split: explicit dash/line separator
+  const rawSegments = emailText.split(/\n[-─—]{4,}\n/);
+  const result: string[] = [];
+
+  for (const seg of rawSegments) {
+    const trimmed = seg.trim();
+    if (trimmed.length < 20) continue;
+
+    // Check if this segment contains multiple ACCT blocks (TC circular format)
+    const acctCount = (trimmed.match(/^ACCT\s+/gim) ?? []).length;
+    if (acctCount >= 2) {
+      result.push(...splitMultipleRequirements(trimmed));
+    } else {
+      result.push(trimmed);
+    }
+  }
+
+  return result.filter(s => s.length > 20);
 }
 
 function detectSegmentType(segment: string): EntryType | null {
@@ -619,9 +679,20 @@ function extractVCEntry(segment: string, signature: ReturnType<typeof extractSig
 
 function extractTCEntry(segment: string, signature: ReturnType<typeof extractSignature>): ExtractedEntry {
   const accountMatch = segment.match(/(?:A\/C|ACCT?|Account)[:\s*]+([^\n*]+)/i);
-  const cargoMatch = segment.match(/(?:CARGO|COMMODITY|COMMODIT)[:\s]+([^\n*]+)/i);
+
+  // Cargo: explicit CARGO: field, OR "1 TCT GRAIN OR SUGAR IN BLK", OR "1 TCT WITH PETCOKE IN BLK"
+  const cargoMatch =
+    segment.match(/(?:CARGO|COMMODITY|COMMODIT)[:\s]+([^\n*]+)/i) ||
+    segment.match(/\d\s+TCT\s+(?:WITH\s+)?([A-Z][A-Z\s\/OR]+?)\s+IN\s+BLK/i) ||
+    segment.match(/TCT\s+(?:WITH\s+)?([A-Z][A-Z\s\/OR]+?)\s+IN\s+BLK/i);
+
   const dwtInfo = parseDwt(segment);
-  const laycanMatch = segment.match(/LAYCAN[:\s:*]+([^\n]+)/i);
+
+  // Laycan: "LAYCAN:" OR "LC " (short form used in TC circulars)
+  const laycanMatch =
+    segment.match(/LAYCAN[:\s:*]+([^\n]+)/i) ||
+    segment.match(/\bLC\s+([^\n]+)/i);
+
   const delMatch = segment.match(/(?:DELY?|DEL(?:IVERY)?)[:\s*]+([^\n*]+)/i);
   const redelMatch = segment.match(/(?:REDELY?|REDEL|RE-DELY?)[:\s*]+([^\n*]+)/i);
   const durationMatch = segment.match(/DURATION[:\s*]+([^\n*]+)/i);

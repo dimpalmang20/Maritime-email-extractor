@@ -31,7 +31,7 @@ function PipelineBadge({ label, count, color }: { label: string; count: number; 
         <div className={`w-2 h-2 rounded-full ${color}`} />
         <span className="text-sm text-foreground">{label}</span>
       </div>
-      <span className="text-sm font-mono font-medium text-foreground">{count.toLocaleString()}</span>
+      <span className="text-sm font-mono font-medium text-foreground">{(count ?? 0).toLocaleString()}</span>
     </div>
   );
 }
@@ -51,7 +51,19 @@ export default function Dashboard() {
     );
   }
 
-  const s = stats!;
+ const s = {
+  totalEmails: 0,
+  costReductionPct: 0,
+  estimatedLlmSavingsUsd: 0,
+  avgProcessingMs: 0,
+  avgConfidence: 0,
+  ruleBasedCount: 0,
+  templateCount: 0,
+  llmFallbackCount: 0,
+  recentActivity: [],
+  total: 0,
+  ...(stats ?? {}),
+  };
 
   return (
     <div className="p-6 space-y-6" data-testid="page-dashboard">
@@ -71,28 +83,28 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Total Processed"
-          value={s.totalEmails.toLocaleString()}
+          value={(s.totalEmails ?? 0).toLocaleString()}
           sub="emails extracted"
           icon={Zap}
         />
         <StatCard
           label="Cost Reduction"
-          value={`${s.costReductionPct.toFixed(1)}%`}
+          value={`${(s.costReductionPct ?? 0).toFixed(1)}%`}
           sub="vs LLM-only approach"
           icon={TrendingDown}
           accent
         />
         <StatCard
           label="LLM Savings"
-          value={`$${s.estimatedLlmSavingsUsd.toFixed(2)}`}
+          value={`$${(s.estimatedLlmSavingsUsd ?? 0).toLocaleString()}`}
           sub="estimated saved"
           icon={TrendingDown}
           accent
         />
         <StatCard
           label="Avg Confidence"
-          value={`${(s.avgConfidence * 100).toFixed(1)}%`}
-          sub={`${s.avgProcessingMs.toFixed(0)}ms avg latency`}
+          value={`${((s.avgConfidence ?? 0) * 100).toFixed(1)}%`}
+          sub={`${(s.avgProcessingMs ?? 0).toFixed(0)}ms avg latency`}
           icon={CheckCircle}
         />
       </div>
@@ -157,7 +169,7 @@ export default function Dashboard() {
               <AlertTriangle className="h-3.5 w-3.5 text-accent mt-0.5 flex-shrink-0" />
               <div>
                 <p className="text-xs font-medium text-accent">Cost Target</p>
-                <p className="text-xs text-muted-foreground mt-0.5">70% LLM reduction goal: {s.costReductionPct >= 70 ? "Achieved" : `${(70 - s.costReductionPct).toFixed(1)}% to go`}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">70% LLM reduction goal: {(s.costReductionPct ?? 0) >= 70 ? "Achieved" : `${(70 - (s.costReductionPct ?? 0)).toFixed(1)}% to go`}</p>
               </div>
             </div>
           </div>
@@ -170,7 +182,7 @@ export default function Dashboard() {
           <Clock className="h-8 w-8 text-primary/40" />
           <div>
             <p className="text-xs text-muted-foreground uppercase tracking-widest">Avg Speed</p>
-            <p className="text-lg font-bold font-mono text-foreground">{s.avgProcessingMs.toFixed(0)}ms</p>
+            <p className="text-lg font-bold font-mono text-foreground">{(s.avgProcessingMs ?? 0).toFixed(0)}ms</p>
             <p className="text-xs text-muted-foreground">vs ~2000ms LLM</p>
           </div>
         </div>
@@ -186,7 +198,7 @@ export default function Dashboard() {
           <CheckCircle className="h-8 w-8 text-green-400/40" />
           <div>
             <p className="text-xs text-muted-foreground uppercase tracking-widest">Avg Accuracy</p>
-            <p className="text-lg font-bold font-mono text-foreground">{(s.avgConfidence * 100).toFixed(1)}%</p>
+            <p className="text-lg font-bold font-mono text-foreground">{((s.avgConfidence ?? 0) * 100).toFixed(1)}%</p>
             <p className="text-xs text-muted-foreground">confidence score</p>
           </div>
         </div>
